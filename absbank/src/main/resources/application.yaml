@@ -1,0 +1,31 @@
+server:
+  port: 8081
+
+springdoc:
+  swagger-ui:
+    disable-swagger-default-url: true
+    path: /api/v1/docs/swagger-ui.html
+  api-docs:
+    path: /api/v1/docs
+
+spring:
+  application:
+    name: ABS-BANK
+  h2:
+    console:
+      enabled: true
+      path: /db
+  graphql:
+    graphiql:
+      enable: true
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/absbank
+    driverClassName: org.postgresql.Driver
+    username: postgres
+    password: "root"
+    ddl-auto: create-drop
+    pool-size: 30
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+  config:
+    import: configserver:${CONFIG_SERVER_URL:http://localhost:9296}

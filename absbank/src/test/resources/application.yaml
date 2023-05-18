@@ -1,0 +1,25 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name:  ABS-BANK-TEST
+  h2:
+    console:
+      enabled: true
+      path: /db
+  config:
+    import: configserver:http://${CONFIG_SERVER_URL:localhost}:9296
+  datasource:
+    url: jdbc:h2:mem:blog
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+    ddl-auto: create-drop
+    pool-size: 30
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+
+eureka:
+  client:
+    enabled: false
