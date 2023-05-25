@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 @Service
 @Log4j2
@@ -21,7 +22,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Autowired
     private CustomerRepository customerRepository;
 
-    private static final int[] seed = {2, 6, 2, 2, 6, 2, 2, 6, 2, 2, 6, 2};
+    private static final int[] seed = {3, 7, 3, 3, 7, 3, 3, 7, 3, 3, 7, 3, 3, 7, 3};
     private static final int serialNumLength = 9;
 
     @Override
@@ -30,12 +31,18 @@ public class CustomerServiceImpl implements CustomerService {
         Map<String, String> banks = BankList.banks();
         log.info(banks);
 
-        customerObj.setBank_code(String.format("%03d", Integer.parseInt(customerObj.getBank_code())));
-        log.info(customerObj);
+        if (!customerObj.getSerial_number().matches("^\\d*$")
+                || !customerObj.getBank_code().matches("^\\d*$")) {
+            throw new CustomerException("Values must contain only digits",
+                    "BAD_REQUEST", 400);
+        }
 
-        Optional<String> bank = Optional.of(Optional.of(banks.get(customerObj.getBank_code()))
+        customerObj.setBank_code(String.format("%03d", Integer.parseInt(customerObj.getBank_code())));
+
+        log.info(customerObj);
+        String bank = Optional.of(banks.get(customerObj.getBank_code()))
                 .orElseThrow(() -> new CustomerException("Code not recognized as a Nigerian commercial bank code",
-                        "BAD_REQUEST", 400)));
+                        "BAD_REQUEST", 400));
 
         log.info("Bank: " + bank);
         Long nuban_long = createNubanWithSerial(customerObj.getSerial_number(), customerObj.getBank_code());
@@ -45,7 +52,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .nuban(nuban)
                 .serial_number(customerObj.getSerial_number())
                 .bank_code(customerObj.getBank_code())
-                .bank(bank.get())
+                .bank(bank)
                 .build();
 
         customerRepository.save(customer);
@@ -74,20 +81,30 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         serialNumber = String.format("%09d", Integer.parseInt(serialNumber));
+        bankCode = bankCode.length() == 5
+                ? String.format("9%d", Integer.parseInt(bankCode))
+                : String.format("%06d", Integer.parseInt(bankCode));
+
+        log.info(bankCode + " : " + serialNumber);
+
         String cipher_str = bankCode + serialNumber;
         String[] cipher = cipher_str.split("");
 
-        log.info("Evaluation the cipher");
-        int sum = Arrays.stream(cipher)
+        log.info(cipher_str + " : Evaluation the cipher: " + Arrays.toString(cipher));
+        int[] cipher_int = Arrays.stream(cipher)
                 .mapToInt(Integer::parseInt)
-                .mapToObj(i -> i * seed[i])
-                .mapToInt(Integer::intValue)
-                .sum();
+                .toArray();
 
+        int sum = 0;
+        for (int i = 0; i < seed.length; i++) {
+            sum += cipher_int[i] * seed[i];
+        }
+
+        log.info("SUM: " + sum);
         sum %= 10;
         int check = 10 - sum;
 
-        log.info("Returning the digit");
+        log.info("Returning the digit: " + check);
         return check == 10 ? 0 : check;
     }
 }

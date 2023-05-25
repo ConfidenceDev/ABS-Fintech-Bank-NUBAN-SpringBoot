@@ -47,7 +47,7 @@ class CustomerServiceImplTest {
 
     private Customer getMockCustomer() {
         return Customer.builder()
-                .id(UUID.fromString("362eadf3-ba00-4ec9-a5d4-b6496246878e"))
+                .id("1")
                 .nuban("0088776692")
                 .serial_number("8877669")
                 .bank_code("050")
